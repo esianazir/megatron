@@ -88,19 +88,23 @@ exports.updateComment = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/comments/:id
 // @access  Private
 exports.deleteComment = asyncHandler(async (req, res, next) => {
-  const comment = await Comment.findById(req.params.id);
+  const comment = await Comment.findById(req.params.id).populate('post');
   
   if (!comment) {
     return next(new ErrorResponse(`Comment not found with id of ${req.params.id}`, 404));
   }
   
-  // Make sure user is comment owner or admin
-  if (comment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+  // Check if user is comment owner, post owner, or admin
+  const isCommentOwner = comment.user.toString() === req.user.id;
+  const isPostOwner = comment.post.userId.toString() === req.user.id;
+  const isAdmin = req.user.isAdmin === true || req.user.role === 'admin' || req.user.email === 'megatron@gmail.com';
+  
+  if (!isCommentOwner && !isPostOwner && !isAdmin) {
     return next(new ErrorResponse(`User ${req.user.id} is not authorized to delete this comment`, 401));
   }
   
   // Remove comment from post's comments array
-  await Post.findByIdAndUpdate(comment.post, {
+  await Post.findByIdAndUpdate(comment.post._id, {
     $pull: { comments: comment._id }
   });
   

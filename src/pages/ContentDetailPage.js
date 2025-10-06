@@ -18,7 +18,11 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Paper
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   Favorite,
@@ -47,6 +51,8 @@ const ContentDetailPage = () => {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [deletingComment, setDeletingComment] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
 
   // Fetch post details
   useEffect(() => {
@@ -188,22 +194,25 @@ const ContentDetailPage = () => {
     }
   };
 
-  // Handle comment deletion
-  const handleDeleteComment = async (commentId) => {
+  // Handle comment deletion confirmation
+  const handleDeleteCommentClick = (comment) => {
     if (!currentUser) {
       alert('Please log in to delete comments');
       return;
     }
+    setCommentToDelete(comment);
+    setDeleteConfirmOpen(true);
+  };
 
-    if (!window.confirm('Are you sure you want to delete this comment?')) {
-      return;
-    }
+  // Handle comment deletion
+  const handleDeleteComment = async () => {
+    if (!commentToDelete) return;
 
     try {
-      setDeletingComment(commentId);
+      setDeletingComment(commentToDelete._id);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`${API_BASE_URL}/posts/${id}/comments/${commentId}`, {
+      const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/comments/${commentToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -212,9 +221,12 @@ const ContentDetailPage = () => {
       });
 
       if (response.ok) {
-        setComments(prev => prev.filter(comment => comment._id !== commentId));
+        setComments(prev => prev.filter(comment => comment._id !== commentToDelete._id));
+        setDeleteConfirmOpen(false);
+        setCommentToDelete(null);
       } else {
-        alert('Failed to delete comment');
+        const errorData = await response.json();
+        alert(`Failed to delete comment: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -222,6 +234,12 @@ const ContentDetailPage = () => {
     } finally {
       setDeletingComment(null);
     }
+  };
+
+  // Handle cancel delete
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setCommentToDelete(null);
   };
 
   // Check if user can delete comment (post owner or comment author or admin)
@@ -481,7 +499,7 @@ const ContentDetailPage = () => {
                             {canDeleteComment(comment) && (
                               <IconButton
                                 size="small"
-                                onClick={() => handleDeleteComment(comment._id)}
+                                onClick={() => handleDeleteCommentClick(comment)}
                                 disabled={deletingComment === comment._id}
                                 sx={{ color: 'error.main' }}
                               >
@@ -514,6 +532,44 @@ const ContentDetailPage = () => {
           </Paper>
         </Box>
       </Box>
+
+      {/* Delete Comment Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCancelDelete}
+        aria-labelledby="delete-comment-dialog-title"
+      >
+        <DialogTitle id="delete-comment-dialog-title">Delete Comment</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this comment?
+          </Typography>
+          {commentToDelete && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                "{commentToDelete.content}"
+              </Typography>
+            </Box>
+          )}
+          <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            This action cannot be undone.
+          </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCancelDelete} color="primary">
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleDeleteComment}
+          color="error"
+          variant="contained"
+          disabled={deletingComment === commentToDelete?._id}
+          startIcon={deletingComment === commentToDelete?._id ? <CircularProgress size={16} /> : null}
+        >
+            {deletingComment === commentToDelete?._id ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
