@@ -10,8 +10,8 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        value: your_mongodb_connection_string
+        value: mongodb+srv://megatron-user:Nazir44nazir@megatron-cluster.ovqf0pw.mongodb.net/megatron?retryWrites=true&w=majority
       - key: JWT_SECRET
-        generateValue: true
+        value: 266438b5ee49ad37b3f7cfc38b62f36ed1693c7f19df89f14b742b3169116b4a
       - key: FRONTEND_URL
         value: https://megatron.kisohub.com
