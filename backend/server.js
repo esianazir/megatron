@@ -17,58 +17,40 @@ const commentsRoutes = require('./routes/comments');
 // Initialize express
 const app = express();
 
-// CORS configuration
-const allowedOrigins = [
-  'https://megatron.kisohub.com',
-  'http://megatron.kisohub.com',
-  'http://localhost:3000',
-  'http://localhost:5000'
-];
-
-// Enable CORS for all routes
+// CORS configuration - Temporary permissive setup for testing
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
+  // Log incoming requests for debugging
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('Headers:', req.headers);
   
-  // Always set CORS headers, but only allow certain origins to access resources
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  
-  // Check if the request origin is in the allowed list
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
+  res.header('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
     return res.status(200).end();
   }
   
   next();
 });
 
-// Security Middleware
-app.use(helmet());
+// Security Middleware - Temporarily disabling some security features for testing
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false
+}));
 
 // Add security headers
 app.use((req, res, next) => {
-  // Set security headers
+  // Minimal security headers for now
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'same-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  
-  // Set a more permissive CSP for now
-  res.setHeader('Content-Security-Policy', 
-    "default-src 'self' https:; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
-    "style-src 'self' 'unsafe-inline' https:; " +
-    `connect-src 'self' ${allowedOrigins.join(' ')} https:;`
-  );
-  
   next();
 });
 
