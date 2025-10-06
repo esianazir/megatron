@@ -45,26 +45,36 @@ const corsOptions = {
 // Security Middleware
 app.use(helmet());
 
-// Enable CORS for all routes
+// Enable CORS for all routes (temporarily permissive for testing)
 app.use((req, res, next) => {
-  // Set CORS headers
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  // Allow all origins (temporarily for testing)
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-access-token');
   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Handle preflight
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(200).json({
+      status: 200,
+      message: 'OK'
+    });
   }
   
   next();
 });
 
-// Add security headers
+// Security headers (temporarily relaxed for testing)
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "default-src 'self' https:;");
+  // Temporarily disable CSP for testing
+  // res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; connect-src *;");
+  
+  // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  
   next();
 });
 

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api';
+import { api } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -34,15 +34,10 @@ function AuthProvider({ children }) {
         
         // Then try to refresh the user data from the server
         try {
-          const response = await api.get('/auth/me', {
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          const response = await api.get('/auth/me');
           
-          if (response.data?.data) {
-            const userData = response.data.data;
+          if (response.data) {
+            const userData = response.data;
             
             // Prepare user data for storage
             const userDataToStore = {
@@ -107,7 +102,7 @@ function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response.data;
+      const { token, user } = response;
       
       if (!token || !user) {
         throw new Error('Invalid response from server');
@@ -144,7 +139,7 @@ function AuthProvider({ children }) {
       
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Login failed. Please check your credentials and try again.' 
+        message: error.message || 'Login failed. Please check your credentials and try again.'
       };
     }
   };
@@ -162,7 +157,7 @@ function AuthProvider({ children }) {
       const response = await api.post('/auth/register', registrationData);
       console.log('Registration response:', response);
       
-      const { token, user } = response.data;
+      const { token, user } = response;
       
       if (!token || !user) {
         throw new Error('Invalid response from server');
@@ -191,18 +186,12 @@ function AuthProvider({ children }) {
         user: userDataToStore
       };
     } catch (error) {
-      console.error('Registration error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          data: error.config?.data,
-          headers: error.config?.headers
-        }
-      });
+      console.error('Registration error:', error);
+      
+      return { 
+        success: false, 
+        message: error.message || 'Registration failed. Please try again.'
+      };
       return { 
         success: false, 
         message: error.response?.data?.message || 'Registration failed. Please check the console for more details.' 

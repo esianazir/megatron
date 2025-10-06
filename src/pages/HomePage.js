@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import api from '../config/api';
 import { 
   Person as PersonIcon, 
   Add as AddIcon, 
@@ -93,14 +94,9 @@ const HomePage = () => {
       try {
         setLoading(true);
         
-        // Fetch from database
-        const response = await fetch('http://localhost:5000/api/posts');
-        if (!response.ok) {
-          throw new Error('Failed to fetch posts');
-        }
-        
-        const result = await response.json();
-        const posts = result.data || [];
+        // Use the API utility to fetch posts
+        const result = await api.get('/posts');
+        const posts = Array.isArray(result) ? result : [];
         
         // Format posts for display
         const formattedVideos = posts.map(post => ({
