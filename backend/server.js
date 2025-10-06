@@ -17,43 +17,33 @@ const commentsRoutes = require('./routes/comments');
 // Initialize express
 const app = express();
 
-// Enable CORS for all routes - this must be before any route definitions
-app.use((req, res, next) => {
-  // Set CORS headers for all responses
-  res.header('Access-Control-Allow-Origin', 'https://megatron.kisohub.com');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request');
-    return res.status(200).end();
-  }
-  
-  next();
-});
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://megatron.kisohub.com',
+  'https://www.megatron.kisohub.com',
+  'https://megatron-backend.onrender.com'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+};
 
 // Security Middleware
 app.use(helmet());
-
-// Add security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  next();
-});
-
-// Body parser middleware - must be before route handlers
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(cookieParser());
-
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log('Headers:', req.headers);
-  next();
-});
+app.use(cors(corsOptions));
 
 // Request logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
