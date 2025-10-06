@@ -53,7 +53,6 @@ app.use((req, res, next) => {
 // Security Middleware
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight across all routes
 
 // Request logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
