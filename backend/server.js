@@ -17,41 +17,43 @@ const commentsRoutes = require('./routes/comments');
 // Initialize express
 const app = express();
 
-// CORS configuration - temporarily permissive for debugging
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://megatron.kisohub.com',
+  'https://www.megatron.kisohub.com',
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow all origins for now
-    callback(null, true);
-    
-    // For production, you can re-enable the whitelist:
-    /*
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'https://megatron.kisohub.com',
-      'https://www.megatron.kisohub.com',
-      'https://megatron-backend-1234.onrender.com',
-      'https://megatron-backend.onrender.com'
-    ];
-    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      console.warn(`CORS blocked: ${origin} is not in allowed origins`);
       return callback(new Error(msg), false);
     }
     return callback(null, true);
-    */
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Total-Count'],
+  maxAge: 600 // 10 minutes
 };
+
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log('Headers:', req.headers);
+  next();
+});
 
 // Security Middleware
 app.use(helmet());
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight across all routes
 
 // Request logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -117,6 +119,16 @@ const connectDB = async () => {
 connectDB().catch(err => {
   console.error('Fatal error during database connection:', err);
   process.exit(1);
+});
+
+// Simple test endpoint at root
+app.get('/', (req, res) => {
+  res.json({
+    status: 'Server is running',
+    timestamp: new Date().toISOString(),
+    nodeVersion: process.version,
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Health check endpoint
@@ -204,9 +216,31 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Error handling for server startup
+const server = app.listen(PORT, '0.0.0.0', (error) => {
+  if (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   console.log(`Health check available at: http://localhost:${PORT}/health`);
+  console.log('All routes:', 
+    app._router.stack
+      .filter(r => r.route)
+      .map(r => Object.keys(r.route.methods)[0].toUpperCase().padEnd(7) + r.route.path)
+      .join('\n')
+  );
+});
+
+// Log all registered routes
+console.log('Registered routes:');
+app._router.stack.forEach((r) => {
+  if (r.route && r.route.path) {
+    console.log(
+      Object.keys(r.route.methods)[0].toUpperCase().padEnd(7) + 
+      r.route.path
+    );
+  }
 });
 
 // Handle unhandled promise rejections
