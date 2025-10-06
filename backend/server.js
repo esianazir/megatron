@@ -22,6 +22,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://megatron.kisohub.com',
   'https://www.megatron.kisohub.com',
+  'https://megatron-backend-1234.onrender.com',
   'https://megatron-backend.onrender.com'
 ];
 
