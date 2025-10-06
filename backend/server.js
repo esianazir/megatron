@@ -17,17 +17,12 @@ const commentsRoutes = require('./routes/comments');
 // Initialize express
 const app = express();
 
-// CORS configuration - Temporary permissive setup for testing
+// Enable CORS for all routes - this must be before any route definitions
 app.use((req, res, next) => {
-  // Log incoming requests for debugging
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log('Origin:', req.headers.origin);
-  console.log('Headers:', req.headers);
-  
-  // Set CORS headers
-  res.header('Access-Control-Allow-Origin', '*');
+  // Set CORS headers for all responses
+  res.header('Access-Control-Allow-Origin', 'https://megatron.kisohub.com');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight requests
@@ -39,20 +34,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Security Middleware - Temporarily disabling some security features for testing
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: false,
-  crossOriginResourcePolicy: false
-}));
+// Security Middleware
+app.use(helmet());
 
 // Add security headers
 app.use((req, res, next) => {
-  // Minimal security headers for now
   res.setHeader('X-Content-Type-Options', 'nosniff');
   next();
 });
+
+// Body parser middleware - must be before route handlers
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(cookieParser());
 
 // Request logging middleware
 app.use((req, res, next) => {
