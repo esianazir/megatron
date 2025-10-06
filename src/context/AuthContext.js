@@ -101,14 +101,16 @@ function AuthProvider({ children }) {
   
   const login = async (email, password) => {
     try {
+      setLoading(true);
       const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response;
       
-      if (!token || !user) {
+      if (!response || !response.token) {
         throw new Error('Invalid response from server');
       }
       
-      // Save token and user data to localStorage
+      const { token, user } = response;
+      
+      // Save token to localStorage
       localStorage.setItem('token', token);
       
       // Prepare user data for storage
@@ -125,6 +127,7 @@ function AuthProvider({ children }) {
       
       // Update current user in state
       setCurrentUser(userDataToStore);
+      setLoading(false);
       
       return { 
         success: true,
@@ -136,10 +139,20 @@ function AuthProvider({ children }) {
       // Clear any partial data on error
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      setCurrentUser(null);
+      setLoading(false);
+      
+      let errorMessage = 'Login failed. Please check your credentials and try again.';
+      
+      if (error.message.includes('Network Error')) {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+      } else if (error.response) {
+        errorMessage = error.response.data?.message || error.message;
+      }
       
       return { 
         success: false, 
-        message: error.message || 'Login failed. Please check your credentials and try again.'
+        message: errorMessage
       };
     }
   };

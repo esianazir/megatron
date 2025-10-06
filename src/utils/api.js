@@ -6,22 +6,40 @@ import config from '../config/api';
 export const apiRequest = async (endpoint, options = {}) => {
   const url = `${config.API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   
+  // Get auth token from localStorage if available
+  const token = localStorage.getItem('token');
+  
   // Merge default options with provided options
   const fetchOptions = {
-    ...config.getFetchOptions(),
-    ...options,
+    method: 'GET',
     headers: {
-      ...config.getFetchOptions().headers,
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...(options.headers || {})
-    }
+    },
+    credentials: 'include',
+    ...options
   };
+
+  // For non-GET requests, ensure body is JSON stringified
+  if (options.body && typeof options.body === 'object') {
+    fetchOptions.body = JSON.stringify(options.body);
+  }
 
   try {
     const response = await fetch(url, fetchOptions);
     
     // Handle non-2xx responses
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { message: response.statusText };
+      }
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
@@ -30,7 +48,12 @@ export const apiRequest = async (endpoint, options = {}) => {
       return {};
     }
 
-    return await response.json();
+    // Try to parse JSON, return text if not JSON
+    try {
+      return await response.json();
+    } catch (e) {
+      return await response.text();
+    }
   } catch (error) {
     console.error('API Request Error:', {
       endpoint,
@@ -44,13 +67,18 @@ export const apiRequest = async (endpoint, options = {}) => {
 // Helper methods for common HTTP methods
 export const api = {
   get: (endpoint) => apiRequest(endpoint, { method: 'GET' }),
-  post: (endpoint, data) => apiRequest(endpoint, { 
+  post: (endpoint, data, options = {}) => apiRequest(endpoint, { 
+    ...options,
     method: 'POST',
-    body: JSON.stringify(data) 
+    body: data
   }),
-  put: (endpoint, data) => apiRequest(endpoint, { 
+  put: (endpoint, data, options = {}) => apiRequest(endpoint, { 
+    ...options,
     method: 'PUT',
-    body: JSON.stringify(data) 
+    body: data
   }),
-  delete: (endpoint) => apiRequest(endpoint, { method: 'DELETE' })
+  delete: (endpoint, options = {}) => apiRequest(endpoint, { 
+    ...options,
+    method: 'DELETE' 
+  })
 };
