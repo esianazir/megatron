@@ -20,8 +20,9 @@ const app = express();
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://yourdomain.com',
-  'https://www.yourdomain.com'
+  'https://megatron.kisohub.com',
+  'https://www.megatron.kisohub.com',
+  'https://megatron-backend.onrender.com'
 ];
 
 const corsOptions = {
