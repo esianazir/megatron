@@ -18,10 +18,22 @@ const commentsRoutes = require('./routes/comments');
 const app = express();
 
 // CORS configuration
+const allowedOrigins = [
+  'https://megatron.kisohub.com',
+  'http://localhost:3000',
+  'http://localhost:5000'
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow all origins for now to test
-    callback(null, true);
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
