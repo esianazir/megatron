@@ -223,24 +223,8 @@ const server = app.listen(PORT, '0.0.0.0', (error) => {
   }
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   console.log(`Health check available at: http://localhost:${PORT}/health`);
-  console.log('All routes:', 
-    app._router.stack
-      .filter(r => r.route)
-      .map(r => Object.keys(r.route.methods)[0].toUpperCase().padEnd(7) + r.route.path)
-      .join('\n')
-  );
 });
 
-// Log all registered routes
-console.log('Registered routes:');
-app._router.stack.forEach((r) => {
-  if (r.route && r.route.path) {
-    console.log(
-      Object.keys(r.route.methods)[0].toUpperCase().padEnd(7) + 
-      r.route.path
-    );
-  }
-});
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
