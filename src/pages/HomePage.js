@@ -92,29 +92,17 @@ const HomePage = () => {
   useEffect(() => {
     const loadVideos = async () => {
       try {
-        console.log('Loading videos...');
         setLoading(true);
         
         // Use the API utility to fetch posts
-        console.log('Fetching posts from API...');
         const result = await api.get('/posts');
-        console.log('API Response:', result);
-        
-        // Handle different response formats
-        let posts = [];
-        if (Array.isArray(result)) {
-          posts = result;
-        } else if (result && Array.isArray(result.data)) {
-          posts = result.data; // Handle case where data is in a data property
-        }
-        
-        console.log(`Found ${posts.length} posts`);
+        const posts = Array.isArray(result) ? result : [];
         
         // Format posts for display
         const formattedVideos = posts.map(post => ({
           id: post._id || post.id,
-          title: post.title || 'Untitled',
-          description: post.description || '',
+          title: post.title,
+          description: post.description,
           thumbnail: post.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail',
           views: post.views || '0',
           timestamp: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Unknown date',

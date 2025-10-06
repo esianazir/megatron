@@ -35,11 +35,9 @@ function AuthProvider({ children }) {
         // Then try to refresh the user data from the server
         try {
           const response = await api.get('/auth/me');
-          console.log('Auth response:', response); // Debug log
           
-          // The response is the data itself, not wrapped in a data property
-          if (response) {
-            const userData = response;
+          if (response.data) {
+            const userData = response.data;
             
             // Prepare user data for storage
             const userDataToStore = {

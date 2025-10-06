@@ -24,24 +24,36 @@ const allowedOrigins = [
   'http://localhost:5000'
 ];
 
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+};
+
 // Security Middleware
 app.use(helmet());
 
-// CORS middleware with proper credentials handling
+// Enable CORS for all routes
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Check if the origin is in the allowed list
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-access-token, cache-control, pragma, expires');
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Cache-Control');
   
-  // Handle preflight requests
+  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -49,17 +61,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Security headers (temporarily relaxed for testing)
+// Add security headers
 app.use((req, res, next) => {
-  // Temporarily disable CSP for testing
-  // res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; connect-src *;");
-  
-  // Security headers
+  res.setHeader('Content-Security-Policy', "default-src 'self' https:;");
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
-  
   next();
 });
 
