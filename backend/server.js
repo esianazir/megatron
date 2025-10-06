@@ -37,23 +37,57 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
     res.header('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
     res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  }
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+  } else if (origin) {
+    // If origin is set but not in allowed origins, block the request
+    return res.status(403).json({ error: 'Origin not allowed' });
   }
   
   next();
 });
 
 // Security Middleware
-app.use(helmet());
+const cspConfig = {
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'"],
+    imgSrc: ["'self'"],
+    connectSrc: ["'self'"].concat(allowedOrigins),
+    fontSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    mediaSrc: ["'self'"],
+    frameSrc: ["'none'"],
+    workerSrc: ["'self'"],
+    formAction: ["'self'"],
+    upgradeInsecureRequests: []
+  }
+};
+
+app.use(helmet({
+  contentSecurityPolicy: false // Disable the default CSP and set it manually below
+}));
 
 // Add security headers
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "default-src 'self' https:;");
+  // Set CSP header with dynamic allowed origins
+  const cspDirectives = [];
+  Object.entries(cspConfig.directives).forEach(([key, value]) => {
+    if (value.length > 0) {
+      cspDirectives.push(`${key} ${value.join(' ')}`);
+    }
+  });
+  
+  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   next();
 });
 
