@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import api from '../config/api';
+import { api } from '../utils/api';
 import { 
   Person as PersonIcon, 
   Add as AddIcon, 
