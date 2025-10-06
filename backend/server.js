@@ -155,16 +155,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/comments', commentsRoutes);
 
-// Temporary debug route to check posts
-const Post = require('./models/Post'); // Make sure to import the Post model
-app.get('/api/debug/posts', async (req, res) => {
-  try {
-    const posts = await Post.find().lean();
-    res.json({ success: true, count: posts.length, data: posts });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to fetch posts', error: error.message });
-  }
-});
 
 // 404 handler
 app.use((req, res, next) => {

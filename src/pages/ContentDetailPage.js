@@ -30,6 +30,7 @@ import {
   PlayArrow
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const ContentDetailPage = () => {
   const { id } = useParams();
@@ -52,7 +53,7 @@ const ContentDetailPage = () => {
         setLoading(true);
         
         // Fetch post details
-        const postResponse = await fetch(`http://localhost:5000/api/posts/${id}`);
+        const postResponse = await fetch(`${API_BASE_URL}/posts/${id}`);
         if (!postResponse.ok) {
           throw new Error('Post not found');
         }
@@ -65,7 +66,7 @@ const ContentDetailPage = () => {
         setLikeCount(postData.likes?.length || 0);
         
         // Fetch comments
-        const commentsResponse = await fetch(`http://localhost:5000/api/posts/${id}/comments`);
+        const commentsResponse = await fetch(`${API_BASE_URL}/posts/${id}/comments`);
         if (commentsResponse.ok) {
           const commentsResult = await commentsResponse.json();
           setComments(commentsResult.data || []);
@@ -83,7 +84,7 @@ const ContentDetailPage = () => {
             headers['Authorization'] = `Bearer ${token}`;
           }
           
-          const viewResponse = await fetch(`http://localhost:5000/api/posts/${id}/view`, {
+          const viewResponse = await fetch(`${API_BASE_URL}/posts/${id}/view`, {
             method: 'PUT',
             headers
           });
@@ -122,7 +123,7 @@ const ContentDetailPage = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/posts/${id}/like`, {
+      const response = await fetch(`${API_BASE_URL}/posts/${id}/like`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -155,7 +156,7 @@ const ContentDetailPage = () => {
       setSubmittingComment(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/posts/${id}/comments`, {
+      const response = await fetch(`${API_BASE_URL}/posts/${id}/comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

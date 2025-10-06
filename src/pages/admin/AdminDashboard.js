@@ -46,6 +46,7 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 
 // Custom TabPanel component
 function TabPanel(props) {
@@ -192,7 +193,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
       // Try to fetch users
       let userCount = 0;
       try {
-        const usersResponse = await axios.get('http://localhost:5000/api/admin/users', {
+        const usersResponse = await axios.get(`${API_BASE_URL}/admin/users`, {
           headers: { 'Authorization': `Bearer ${token}` },
           params: { limit: 1000 }
         });
@@ -216,13 +217,13 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
         
         // Try the admin endpoint first
         try {
-          contentResponse = await axios.get('http://localhost:5000/api/admin/posts', {
+          contentResponse = await axios.get(`${API_BASE_URL}/admin/posts`, {
             headers: { 'Authorization': `Bearer ${token}` },
             params: { limit: 1000 }
           });
         } catch (e) {
           console.log('[FETCH_DASHBOARD_STATS] Admin posts endpoint failed, trying regular posts endpoint...');
-          contentResponse = await axios.get('http://localhost:5000/api/posts', {
+          contentResponse = await axios.get(`${API_BASE_URL}/posts`, {
             headers: { 'Authorization': `Bearer ${token}` },
             params: { limit: 1000 }
           });
@@ -279,7 +280,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
       // Try to delete from API (may fail if post only exists in localStorage)
       if (token) {
         try {
-          await axios.delete(`http://localhost:5000/api/admin/posts/${itemId}`, {
+          await axios.delete(`${API_BASE_URL}/admin/posts/${itemId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           deletedFromAPI = true;
@@ -562,7 +563,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
         
         console.log('[FETCH_CONTENT] Fetching posts with params:', params);
         
-        response = await axios.get('http://localhost:5000/api/admin/posts', {
+        response = await axios.get(`${API_BASE_URL}/admin/posts`, {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -574,7 +575,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
         } catch (adminError) {
           console.log('[FETCH_CONTENT] Admin endpoint failed, trying regular posts endpoint...', adminError);
           // Fall back to regular posts endpoint
-          response = await axios.get('http://localhost:5000/api/posts', {
+          response = await axios.get(`${API_BASE_URL}/posts`, {
             headers: { 
               'Authorization': `Bearer ${token}`,
               'Accept': 'application/json'
@@ -637,7 +638,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
         if (posts.length === 0 && contentSearchTerm) {
           console.log('[FETCH_CONTENT] No posts found with search, trying without search...');
           try {
-            const newResponse = await axios.get('http://localhost:5000/api/admin/posts', {
+            const newResponse = await axios.get(`${API_BASE_URL}/admin/posts`, {
               headers: { 
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
@@ -697,7 +698,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
         if (formattedContent.length === 0 && contentSearchTerm) {
           console.log('[FETCH_CONTENT] No posts found with search, trying without search...');
           try {
-            const newResponse = await axios.get('http://localhost:5000/api/admin/posts', {
+            const newResponse = await axios.get(`${API_BASE_URL}/admin/posts`, {
               headers: { 
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
@@ -781,7 +782,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
       
       let response;
       try {
-        response = await axios.get('http://localhost:5000/api/admin/users', {
+        response = await axios.get(`${API_BASE_URL}/admin/users`, {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -975,25 +976,25 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
           };
 
           // Check if post exists in the database
-          const response = await axios.get(`http://localhost:5000/api/posts/${postId}`, {
+          const response = await axios.get(`${API_BASE_URL}/posts/${postId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
 
           if (response.data) {
             // Update existing post
-            await axios.put(`http://localhost:5000/api/posts/${postId}`, postData, {
+            await axios.put(`${API_BASE_URL}/posts/${postId}`, postData, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
           } else {
             // Create new post
-            await axios.post('http://localhost:5000/api/posts', postData, {
+            await axios.post(`${API_BASE_URL}/posts`, postData, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
           }
         } catch (error) {
           if (error.response && error.response.status === 404) {
             // Post doesn't exist in the database, create it
-            await axios.post('http://localhost:5000/api/posts', {
+            await axios.post(`${API_BASE_URL}/posts`, {
               ...post,
               lastSynced: new Date().toISOString()
             }, {
@@ -1019,7 +1020,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
       
       // Delete from database
       if (token && postId) {
-        await axios.delete(`http://localhost:5000/api/admin/posts/${postId}`, {
+        await axios.delete(`${API_BASE_URL}/admin/posts/${postId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         console.log('[DELETE] Post deleted from database');

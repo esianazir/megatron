@@ -7,6 +7,7 @@ import {
   Image as ImageIcon 
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config/api';
 import { 
   Container, 
   Typography, 
@@ -94,7 +95,7 @@ const HomePage = () => {
         setLoading(true);
         
         // Fetch from database
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://megatron-backend-1234.onrender.com/api'}/posts`, {
+        const response = await fetch(`${API_BASE_URL}/posts`, {
           credentials: 'include'  // Important for cookies
         });
         if (!response.ok) {
@@ -215,7 +216,7 @@ const HomePage = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/posts', {
+      const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -232,7 +233,7 @@ const HomePage = () => {
       console.log('Post created successfully:', result);
 
       // Reload videos from database
-      const refreshResponse = await fetch('http://localhost:5000/api/posts');
+      const refreshResponse = await fetch(`${API_BASE_URL}/posts`);
       if (refreshResponse.ok) {
         const refreshResult = await refreshResponse.json();
         const posts = refreshResult.data || [];

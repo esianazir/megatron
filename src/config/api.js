@@ -4,7 +4,7 @@ const config = {
     API_BASE_URL: 'http://localhost:5000/api'
   },
   production: {
-    API_BASE_URL: 'https://megatron-backend-1234.onrender.com/api'
+    API_BASE_URL: 'https://megatron-backend.onrender.com/api'
   }
 };
 

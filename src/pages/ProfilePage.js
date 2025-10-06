@@ -44,6 +44,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import VideoCard from '../components/video/VideoCard';
+import { API_BASE_URL } from '../config/api';
 
 // InputLabel is already imported from @mui/material
 // Format join date
@@ -143,7 +144,7 @@ function ProfilePage() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5000/api/posts?userId=${currentUserId}`, {
+        const response = await fetch(`${API_BASE_URL}/posts?userId=${currentUserId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -398,7 +399,7 @@ function ProfilePage() {
       }
 
       // Delete from database
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -511,7 +512,7 @@ function ProfilePage() {
 
       console.log('Uploading post data:', postData);
 
-      const response = await fetch('http://localhost:5000/api/posts', {
+      const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -948,14 +949,6 @@ function ProfilePage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Share your first post to get started
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/upload')}
-          >
-            Create Post
-          </Button>
         </Box>
       )}
 
