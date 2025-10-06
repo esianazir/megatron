@@ -12,9 +12,8 @@ const config = {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
-    headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
+    // Cache control is now handled by the server
     headers.append('Pragma', 'no-cache');
-    headers.append('Expires', '0');
     
     // Add timestamp to prevent caching
     const timestamp = new Date().getTime();
