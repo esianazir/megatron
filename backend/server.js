@@ -18,32 +18,36 @@ const commentsRoutes = require('./routes/comments');
 const app = express();
 
 // CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://megatron.kisohub.com',
-  'https://www.megatron.kisohub.com',
-  'https://megatron-backend.onrender.com'
-];
-
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
+    // Allow all origins for now to test
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
 // Security Middleware
 app.use(helmet());
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable preflight for all routes
+
+// Add security headers
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self' https:;");
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Headers:', req.headers);
+  next();
+});
 
 // Request logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
