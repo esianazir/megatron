@@ -1,7 +1,7 @@
 // API Configuration
 const config = {
   // Use REACT_APP_API_URL from environment variables, fallback to Render URL
-  API_BASE_URL: process.env.REACT_APP_API_URL || 'https://megatron-backend.onrender.com/api',
+  API_BASE_URL: process.env.REACT_APP_API_URL || 'https://megatron-backend-1234.onrender.com/api',
   
   // Add browser detection
   isSafari: () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent),

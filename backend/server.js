@@ -24,7 +24,7 @@ const allowedOrigins = [
   'http://localhost:5000'
 ];
 
-// CORS middleware
+// CORS middleware with credentials support
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
@@ -32,14 +32,19 @@ app.use((req, res, next) => {
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
     res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
   }
   
-  // Handle preflight
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(200).json({
+      status: 200,
+      message: 'Preflight check passed',
+      methods: 'GET, POST, PUT, DELETE, OPTIONS'
+    });
   }
   
   next();
