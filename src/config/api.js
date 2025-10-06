@@ -1,7 +1,7 @@
 // API Configuration
 const config = {
-  // Use REACT_APP_API_URL from environment variables, fallback to Render URL
-  API_BASE_URL: process.env.REACT_APP_API_URL || 'https://megatron-backend.onrender.com/api',
+  // Force using the production API URL
+  API_BASE_URL: 'https://megatron-backend.onrender.com/api',
   
   // Add browser detection
   isSafari: () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
@@ -22,7 +22,7 @@ const config = {
     const options = {
       method: method.toUpperCase(),
       headers: headers,
-      credentials: 'include',
+      credentials: 'include', // Send cookies with the request
       mode: 'cors',
       cache: 'no-store',
       redirect: 'follow',
@@ -72,9 +72,10 @@ const config = {
   
   // Helper function to get full API URL
   getApiUrl: (endpoint) => {
-    const baseUrl = process.env.REACT_APP_API_URL || 'https://megatron-backend.onrender.com/api';
-    // Ensure no double slashes in URL
-    return `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+    const baseUrl = 'https://megatron-backend.onrender.com/api';
+    const url = `${baseUrl.replace(/\/+$/, '')}/${endpoint.replace(/^\/+/, '')}`;
+    console.log('API Request URL:', url); // Debug log
+    return url;
   }
 };
 
