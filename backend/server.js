@@ -29,65 +29,46 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
+  // Always set CORS headers, but only allow certain origins to access resources
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  
   // Check if the request origin is in the allowed list
-  if (allowedOrigins.includes(origin)) {
+  if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-    res.header('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
-    res.header('Access-Control-Max-Age', '86400'); // 24 hours
-    
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-  } else if (origin) {
-    // If origin is set but not in allowed origins, block the request
-    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
   
   next();
 });
 
 // Security Middleware
-const cspConfig = {
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'"],
-    imgSrc: ["'self'"],
-    connectSrc: ["'self'"].concat(allowedOrigins),
-    fontSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    mediaSrc: ["'self'"],
-    frameSrc: ["'none'"],
-    workerSrc: ["'self'"],
-    formAction: ["'self'"],
-    upgradeInsecureRequests: []
-  }
-};
-
-app.use(helmet({
-  contentSecurityPolicy: false // Disable the default CSP and set it manually below
-}));
+app.use(helmet());
 
 // Add security headers
 app.use((req, res, next) => {
-  // Set CSP header with dynamic allowed origins
-  const cspDirectives = [];
-  Object.entries(cspConfig.directives).forEach(([key, value]) => {
-    if (value.length > 0) {
-      cspDirectives.push(`${key} ${value.join(' ')}`);
-    }
-  });
-  
-  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+  // Set security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  
+  // Set a more permissive CSP for now
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self' https:; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
+    "style-src 'self' 'unsafe-inline' https:; " +
+    `connect-src 'self' ${allowedOrigins.join(' ')} https:;`
+  );
+  
   next();
 });
 
