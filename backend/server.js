@@ -17,17 +17,22 @@ const commentsRoutes = require('./routes/comments');
 // Initialize express
 const app = express();
 
-// CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://megatron.kisohub.com',
-  'https://www.megatron.kisohub.com',
-  'https://megatron-backend-1234.onrender.com',
-  'https://megatron-backend.onrender.com'
-];
-
+// CORS configuration - temporarily permissive for debugging
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow all origins for now
+    callback(null, true);
+    
+    // For production, you can re-enable the whitelist:
+    /*
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://megatron.kisohub.com',
+      'https://www.megatron.kisohub.com',
+      'https://megatron-backend-1234.onrender.com',
+      'https://megatron-backend.onrender.com'
+    ];
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
@@ -36,10 +41,12 @@ const corsOptions = {
       return callback(new Error(msg), false);
     }
     return callback(null, true);
+    */
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
 // Security Middleware
@@ -119,6 +126,15 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Test endpoint
+app.get('/api/test-cors', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'CORS is working!',
+    timestamp: new Date().toISOString()
   });
 });
 

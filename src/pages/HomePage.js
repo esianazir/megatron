@@ -94,7 +94,9 @@ const HomePage = () => {
         setLoading(true);
         
         // Fetch from database
-        const response = await fetch('http://localhost:5000/api/posts');
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://megatron-backend-1234.onrender.com/api'}/posts`, {
+          credentials: 'include'  // Important for cookies
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch posts');
         }
