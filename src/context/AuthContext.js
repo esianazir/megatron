@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../utils/api';
+import api from '../api';
 
 const AuthContext = createContext();
 
@@ -34,10 +34,15 @@ function AuthProvider({ children }) {
         
         // Then try to refresh the user data from the server
         try {
-          const response = await api.get('/auth/me');
+          const response = await api.get('/auth/me', {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
           
-          if (response.data) {
-            const userData = response.data;
+          if (response.data?.data) {
+            const userData = response.data.data;
             
             // Prepare user data for storage
             const userDataToStore = {
@@ -101,16 +106,14 @@ function AuthProvider({ children }) {
   
   const login = async (email, password) => {
     try {
-      setLoading(true);
       const response = await api.post('/auth/login', { email, password });
+      const { token, user } = response.data;
       
-      if (!response || !response.token) {
+      if (!token || !user) {
         throw new Error('Invalid response from server');
       }
       
-      const { token, user } = response;
-      
-      // Save token to localStorage
+      // Save token and user data to localStorage
       localStorage.setItem('token', token);
       
       // Prepare user data for storage
@@ -127,7 +130,6 @@ function AuthProvider({ children }) {
       
       // Update current user in state
       setCurrentUser(userDataToStore);
-      setLoading(false);
       
       return { 
         success: true,
@@ -139,20 +141,10 @@ function AuthProvider({ children }) {
       // Clear any partial data on error
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      setCurrentUser(null);
-      setLoading(false);
-      
-      let errorMessage = 'Login failed. Please check your credentials and try again.';
-      
-      if (error.message.includes('Network Error')) {
-        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-      } else if (error.response) {
-        errorMessage = error.response.data?.message || error.message;
-      }
       
       return { 
         success: false, 
-        message: errorMessage
+        message: error.response?.data?.message || 'Login failed. Please check your credentials and try again.' 
       };
     }
   };
@@ -170,7 +162,7 @@ function AuthProvider({ children }) {
       const response = await api.post('/auth/register', registrationData);
       console.log('Registration response:', response);
       
-      const { token, user } = response;
+      const { token, user } = response.data;
       
       if (!token || !user) {
         throw new Error('Invalid response from server');
@@ -199,12 +191,18 @@ function AuthProvider({ children }) {
         user: userDataToStore
       };
     } catch (error) {
-      console.error('Registration error:', error);
-      
-      return { 
-        success: false, 
-        message: error.message || 'Registration failed. Please try again.'
-      };
+      console.error('Registration error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.config?.data,
+          headers: error.config?.headers
+        }
+      });
       return { 
         success: false, 
         message: error.response?.data?.message || 'Registration failed. Please check the console for more details.' 

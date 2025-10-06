@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { api } from '../utils/api';
 import { 
   Person as PersonIcon, 
   Add as AddIcon, 
@@ -94,35 +93,29 @@ const HomePage = () => {
       try {
         setLoading(true);
         
-        // Use the API utility to fetch posts
-        const response = await api.get('/posts');
-        
-        // Handle different response formats
-        let posts = [];
-        if (Array.isArray(response)) {
-          posts = response;
-        } else if (response && Array.isArray(response.data)) {
-          posts = response.data;
-        } else if (response && response.data && Array.isArray(response.data.posts)) {
-          posts = response.data.posts;
+        // Fetch from database
+        const response = await fetch('http://localhost:5000/api/posts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts');
         }
         
-        console.log('Fetched posts:', posts); // Debug log
+        const result = await response.json();
+        const posts = result.data || [];
         
         // Format posts for display
         const formattedVideos = posts.map(post => ({
-          id: post._id || post.id || uuidv4(),
-          title: post.title || 'Untitled',
-          description: post.description || '',
-          thumbnail: post.thumbnailUrl || post.thumbnail || 'https://via.placeholder.com/400x225?text=No+Thumbnail',
+          id: post._id || post.id,
+          title: post.title,
+          description: post.description,
+          thumbnail: post.thumbnailUrl || 'https://via.placeholder.com/400x225?text=No+Thumbnail',
           views: post.views || '0',
           timestamp: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Unknown date',
           user: {
-            id: post.userId?._id || post.userId || post.user?._id || 'unknown',
-            name: post.userId?.name || post.user?.name || 'Anonymous',
-            avatar: post.userId?.avatar || post.user?.avatar || 'https://via.placeholder.com/40x40?text=U',
+            id: post.userId?._id || post.userId || 'unknown',
+            name: post.userId?.name || 'Anonymous',
+            avatar: post.userId?.avatar || 'https://via.placeholder.com/40x40?text=U',
           },
-          url: post.mediaUrl || post.url,
+          url: post.mediaUrl,
           mediaType: post.mediaType || 'video'
         }));
         
@@ -130,8 +123,7 @@ const HomePage = () => {
         setError('');
       } catch (err) {
         console.error('Error loading videos:', err);
-        setError(err.message || 'Failed to load videos. Please try again.');
-        setVideos([]); // Reset videos on error
+        setError('Failed to load videos. Please try again.');
       } finally {
         setLoading(false);
       }

@@ -1,36 +1,19 @@
-// API Configuration
+// API Configuration for different environments
 const config = {
-  // Use REACT_APP_API_URL from environment variables, fallback to Render URL
-  API_BASE_URL: process.env.REACT_APP_API_URL || 'https://megatron-backend-1234.onrender.com/api',
-  
-  // Add browser detection
-  isSafari: () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
-  
-  // Common fetch options
-  getFetchOptions: (method = 'GET', data = null) => {
-    const options = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      },
-      credentials: 'include'  // Important for cookies/sessions
-    };
-    
-    if (data) {
-      options.body = JSON.stringify(data);
-    }
-    
-    return options;
+  development: {
+    API_BASE_URL: 'http://localhost:5000/api'
   },
-  
-  // Helper function to get full API URL
-  getApiUrl: (endpoint) => {
-    const baseUrl = process.env.REACT_APP_API_URL || 'https://megatron-backend.onrender.com/api';
-    return `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  production: {
+    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://your-backend-url.railway.app/api'
   }
 };
 
-export default config;
+const environment = process.env.NODE_ENV || 'development';
+export const API_BASE_URL = config[environment].API_BASE_URL;
+
+// Helper function to get full API URL
+export const getApiUrl = (endpoint) => {
+  return `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+};
+
+export default config[environment];
