@@ -284,7 +284,7 @@ function ProfilePage() {
   };
 
   // Admin email and ID constants
-  const ADMIN_EMAIL = 'naziresia@gmail.com';
+  const ADMIN_EMAIL = 'megatron@gmail.com';
   const ADMIN_USER_ID = 'admin_user_id_123'; // Universal admin ID
 
   // Handle post deletion
@@ -373,6 +373,7 @@ function ProfilePage() {
     
     // Check if user is admin or the post owner
     const isAdmin = currentUser?.email === ADMIN_EMAIL || 
+                   currentUser?.isAdmin === true || 
                    currentUser?.role === 'admin' || 
                    currentUser?.uid === ADMIN_USER_ID ||
                    currentUser?._id === ADMIN_USER_ID;
@@ -903,6 +904,7 @@ function ProfilePage() {
             <Box sx={{ position: 'relative' }}>
               {/* Show delete button for admin or post owner */}
               {(currentUser && (currentUser.email === ADMIN_EMAIL || 
+                              currentUser.isAdmin === true ||
                               currentUser.role === 'admin' || 
                               post.userId === (currentUser.uid || currentUser._id || currentUser.id) ||
                               post.userId === ADMIN_USER_ID)) && (

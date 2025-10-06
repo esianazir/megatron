@@ -74,7 +74,7 @@ exports.incrementView = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Post not found with id of ${req.params.id}`, 404));
   }
   
-  // Get user ID from token if available, otherwise use IP or session
+  // Get user ID from token if available
   let userId = null;
   const authHeader = req.headers.authorization;
   
@@ -90,17 +90,19 @@ exports.incrementView = asyncHandler(async (req, res, next) => {
     }
   }
   
-  // Check if this user has already viewed this post
-  const hasViewed = userId ? post.viewedBy.includes(userId) : false;
+  // Get browser session identifier from request body or generate one
+  const { sessionId } = req.body;
+  const viewIdentifier = userId || sessionId || req.ip;
+  
+  // Check if this user/session has already viewed this post
+  const hasViewed = post.viewedBy.includes(viewIdentifier);
   
   if (!hasViewed) {
     // Increment view count
     post.views = (post.views || 0) + 1;
     
-    // Add user to viewedBy array if authenticated
-    if (userId) {
-      post.viewedBy.push(userId);
-    }
+    // Add identifier to viewedBy array
+    post.viewedBy.push(viewIdentifier);
     
     await post.save();
   }

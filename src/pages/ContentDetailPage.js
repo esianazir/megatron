@@ -27,7 +27,8 @@ import {
   ArrowBack,
   Send,
   Visibility,
-  PlayArrow
+  PlayArrow,
+  Delete
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config/api';
@@ -45,6 +46,7 @@ const ContentDetailPage = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [deletingComment, setDeletingComment] = useState(null);
 
   // Fetch post details
   useEffect(() => {
@@ -75,6 +77,14 @@ const ContentDetailPage = () => {
         // Increment view count (backend will handle duplicate prevention)
         try {
           const token = localStorage.getItem('token');
+          
+          // Generate or get session ID for anonymous users
+          let sessionId = localStorage.getItem('sessionId');
+          if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('sessionId', sessionId);
+          }
+          
           const headers = {
             'Content-Type': 'application/json'
           };
@@ -86,7 +96,8 @@ const ContentDetailPage = () => {
           
           const viewResponse = await fetch(`${API_BASE_URL}/posts/${id}/view`, {
             method: 'PUT',
-            headers
+            headers,
+            body: JSON.stringify({ sessionId })
           });
           
           if (viewResponse.ok) {
@@ -175,6 +186,53 @@ const ContentDetailPage = () => {
     } finally {
       setSubmittingComment(false);
     }
+  };
+
+  // Handle comment deletion
+  const handleDeleteComment = async (commentId) => {
+    if (!currentUser) {
+      alert('Please log in to delete comments');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
+      return;
+    }
+
+    try {
+      setDeletingComment(commentId);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_BASE_URL}/posts/${id}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setComments(prev => prev.filter(comment => comment._id !== commentId));
+      } else {
+        alert('Failed to delete comment');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      alert('Failed to delete comment');
+    } finally {
+      setDeletingComment(null);
+    }
+  };
+
+  // Check if user can delete comment (post owner or comment author or admin)
+  const canDeleteComment = (comment) => {
+    if (!currentUser) return false;
+    
+    const isCommentAuthor = comment.user?._id === currentUser._id || comment.user?.id === currentUser._id;
+    const isPostOwner = post?.userId?._id === currentUser._id || post?.userId === currentUser._id;
+    const isAdmin = currentUser.isAdmin === true || currentUser.email === 'megatron@gmail.com';
+    
+    return isCommentAuthor || isPostOwner || isAdmin;
   };
 
   // Get YouTube video ID for embedding
@@ -416,9 +474,25 @@ const ContentDetailPage = () => {
                       </ListItemAvatar>
                       <ListItemText
                         primary={
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            {comment.user?.name || 'Anonymous'}
-                          </Typography>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="subtitle2" fontWeight="bold">
+                              {comment.user?.name || 'Anonymous'}
+                            </Typography>
+                            {canDeleteComment(comment) && (
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDeleteComment(comment._id)}
+                                disabled={deletingComment === comment._id}
+                                sx={{ color: 'error.main' }}
+                              >
+                                {deletingComment === comment._id ? (
+                                  <CircularProgress size={16} />
+                                ) : (
+                                  <Delete fontSize="small" />
+                                )}
+                              </IconButton>
+                            )}
+                          </Box>
                         }
                         secondary={
                           <Box>
