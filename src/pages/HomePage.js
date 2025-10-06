@@ -100,7 +100,14 @@ const HomePage = () => {
         const result = await api.get('/posts');
         console.log('API Response:', result);
         
-        const posts = Array.isArray(result) ? result : [];
+        // Handle different response formats
+        let posts = [];
+        if (Array.isArray(result)) {
+          posts = result;
+        } else if (result && Array.isArray(result.data)) {
+          posts = result.data; // Handle case where data is in a data property
+        }
+        
         console.log(`Found ${posts.length} posts`);
         
         // Format posts for display
