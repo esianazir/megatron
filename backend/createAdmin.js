@@ -16,23 +16,19 @@ const createAdmin = async () => {
     const adminEmail = 'megatron@gmail.com';
     const adminPassword = 'megapass123';
 
-    // Check if admin user already exists
+    // Check if admin user already exists and delete them
     const existingAdmin = await User.findOne({ email: adminEmail });
     if (existingAdmin) {
-      console.log('Admin user already exists.');
-      return;
+      await User.deleteOne({ email: adminEmail });
+      console.log('Existing admin user deleted.');
     }
 
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(adminPassword, salt);
-
-    // Create the new admin user
+    // Create the new admin user with the plain-text password
     const newAdmin = new User({
       name: 'Admin',
       email: adminEmail,
-      password: hashedPassword,
-      isAdmin: true, // Set the user as an admin
+      password: adminPassword, // The pre-save hook will hash this
+      isAdmin: true,
     });
 
     // Save the user to the database
